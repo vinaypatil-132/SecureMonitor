@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" x-data="dashboardData()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitoring Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/alpinejs/3.5.0/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-300 font-sans">
+    <header class="bg-gray-800 p-6 shadow-lg">
+        <h1 class="text-3xl font-bold text-center text-teal-400">System Monitoring Dashboard</h1>
+    </header>
+    <main class="container mx-auto p-6">
+        <section id="data" class="bg-gray-800 rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-semibold mb-6 text-teal-300">System Data</h2>
+
+            <!-- Network Section -->
+            <div id="network" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Network</h3>
+                <div x-show="show" x-transition>
+                    <p class="mb-1">Bytes Sent: <span id="network-sent" class="text-teal-400 animate-pulse" x-text="networkSent + ' MB'"></span></p>
+                    <p>Bytes Received: <span id="network-recv" class="text-teal-400 animate-pulse" x-text="networkRecv + ' MB'"></span></p>
+                </div>
+            </div>
+
+            <!-- Performance Section -->
+            <div id="performance" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Performance</h3>
+                <div x-show="show" x-transition>
+                    <p class="mb-1">CPU Usage: <span id="cpu-usage" class="text-teal-400 animate-pulse" x-text="cpuUsage"></span>%</p>
+                    <p class="mb-1">Memory Usage: <span id="memory-usage" class="text-teal-400 animate-pulse" x-text="memoryUsage"></span>%</p>
+                    <p>Disk Usage: <span id="disk-usage" class="text-teal-400 animate-pulse" x-text="diskUsage"></span>%</p>
+                </div>
+            </div>
+
+            <!-- Authentication Section -->
+            <div id="authentication" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Authentication Logs</h3>
+                <pre x-show="show" x-transition id="authentication-logs" class="bg-gray-700 rounded-lg p-4 text-sm text-gray-100" x-text="authentication"></pre>
+            </div>
+
+            <!-- Incoming Connections Section -->
+            <div id="incoming-connections" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Incoming Connections</h3>
+                <pre x-show="show" x-transition id="incoming-connections" class="bg-gray-700 rounded-lg p-4 text-sm text-gray-100" x-text="incomingConnections"></pre>
+            </div>
+
+            <!-- Current Network Section -->
+            <div id="current-network" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Current Network Details</h3>
+                <pre x-show="show" x-transition id="current-network" class="bg-gray-700 rounded-lg p-4 text-sm text-gray-100" x-text="currentNetwork"></pre>
+            </div>
+
+            <!-- Data Usage Section -->
+            <div id="data-usage" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Data Usage</h3>
+                <p class="mb-1">Total Bytes Sent: <span id="data-sent" class="text-teal-400 animate-pulse" x-text="dataSent + ' MB'"></span></p>
+                <p>Total Bytes Received: <span id="data-recv" class="text-teal-400 animate-pulse" x-text="dataRecv + ' MB'"></span></p>
+            </div>
+
+            <!-- Processes Section -->
+            <div id="processes" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Active Processes</h3>
+                <table x-show="show" x-transition id="processes-table" class="min-w-full bg-gray-700 rounded-lg">
+                    <thead>
+                        <tr class="text-left text-teal-200">
+                            <th class="py-2 px-4">PID</th>
+                            <th class="py-2 px-4">Name</th>
+                            <th class="py-2 px-4">CPU (%)</th>
+                            <th class="py-2 px-4">Memory (MB)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="process in processes" :key="process.pid">
+                            <tr class="text-gray-100">
+                                <td class="py-2 px-4" x-text="process.pid"></td>
+                                <td class="py-2 px-4" x-text="process.name"></td>
+                                <td class="py-2 px-4" x-text="process.cpu_percent"></td>
+                                <td class="py-2 px-4" x-text="process.memory_info"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Disk Partitions Section -->
+            <div id="disk-partitions" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Disk Partitions</h3>
+                <table x-show="show" x-transition id="disk-partitions-table" class="min-w-full bg-gray-700 rounded-lg">
+                    <thead>
+                        <tr class="text-left text-teal-200">
+                            <th class="py-2 px-4">Device</th>
+                            <th class="py-2 px-4">Mountpoint</th>
+                            <th class="py-2 px-4">FSType</th>
+                            <th class="py-2 px-4">Total (GB)</th>
+                            <th class="py-2 px-4">Used (GB)</th>
+                            <th class="py-2 px-4">Free (GB)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="partition in diskPartitions" :key="partition.device">
+                            <tr class="text-gray-100">
+                                <td class="py-2 px-4" x-text="partition.device"></td>
+                                <td class="py-2 px-4" x-text="partition.mountpoint"></td>
+                                <td class="py-2 px-4" x-text="partition.fstype"></td>
+                                <td class="py-2 px-4" x-text="partition.total"></td>
+                                <td class="py-2 px-4" x-text="partition.used"></td>
+                                <td class="py-2 px-4" x-text="partition.free"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Battery Status Section -->
+            <div id="battery-status" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">Battery Status</h3>
+                <div x-show="show" x-transition>
+                    <p class="mb-1">Battery Percentage: <span id="battery-percent" class="text-teal-400 animate-pulse" x-text="batteryPercent + '%'"></span></p>
+                    <p class="mb-1">Plugged In: <span id="battery-plugged-in" class="text-teal-400 animate-pulse" x-text="batteryPluggedIn ? 'Yes' : 'No'"></span></p>
+                    <p>Time Left: <span id="battery-time-left" class="text-teal-400 animate-pulse" x-text="batteryTimeLeft"></span></p>
+                </div>
+            </div>
+
+            <!-- System Information Section -->
+            <div id="system-info" class="mb-6" x-data="{ show: true }">
+                <h3 class="text-xl font-semibold text-teal-200 mb-2 cursor-pointer" @click="show = !show">System Information</h3>
+                <pre x-show="show" x-transition id="system-info" class="bg-gray-700 rounded-lg p-4 text-sm text-gray-100" x-text="systemInfo"></pre>
+            </div>
+        </section>
+    </main>
+    <script>
+      function dashboardData() {
+        return {
+          networkSent: "",
+          networkRecv: "",
+          cpuUsage: "",
+          memoryUsage: "",
+          diskUsage: "",
+          authentication: "",
+          incomingConnections: "",
+          currentNetwork: "",
+          dataSent: "",
+          dataRecv: "",
+          processes: [],
+          diskPartitions: [],
+          batteryPercent: "",
+          batteryPluggedIn: false,
+          batteryTimeLeft: "",
+          systemInfo: "",
+
+          async fetchData() {
+            try {
+              const response = await fetch("/data");
+              const data = await response.json();
+              this.networkSent = data.network.bytes_sent.toFixed(2);
+              this.networkRecv = data.network.bytes_recv.toFixed(2);
+              this.cpuUsage = data.performance.cpu_usage.toFixed(2);
+              this.memoryUsage = data.performance.memory_usage.toFixed(2);
+              this.diskUsage = data.performance.disk_usage.toFixed(2);
+              this.authentication = data.authentication.join("\n");
+              this.incomingConnections = data.incoming_connections.join("\n");
+              this.currentNetwork = JSON.stringify(data.current_network, null, 2);
+              this.dataSent = data.data_usage.total_bytes_sent.toFixed(2);
+              this.dataRecv = data.data_usage.total_bytes_recv.toFixed(2);
+              this.processes = data.processes;
+              this.diskPartitions = data.disk_partitions;
+              this.batteryPercent = data.battery_status.percent.toFixed(2);
+              this.batteryPluggedIn = data.battery_status.plugged_in;
+              this.batteryTimeLeft =
+                data.battery_status.time_left === "Unknown"
+                  ? "Unknown"
+                  : data.battery_status.time_left;
+              this.systemInfo = JSON.stringify(data.system_info, null, 2);
+            } catch (error) {
+              console.error("Error fetching data:", error);
+            }
+          },
+
+          init() {
+            this.fetchData();
+            setInterval(() => {
+              this.fetchData();
+            }, 5001); // Refresh every 5 seconds
+          },
+        };
+      }
+    </script>
+</body>
+</html>
